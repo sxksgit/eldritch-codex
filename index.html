@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eldritch Codex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ======================================================
+     SETUP SCREEN
+====================================================== -->
+<div id="setup-screen" class="screen">
+
+  <nav class="top-nav">
+    <div class="brand">
+      <img class="brand-img" src="images/backgrounds/codex_logo.png" alt="Eldritch Codex" onerror="this.style.display='none'">
+      <div>
+        <h1>Eldritch Codex</h1>
+        <span>Mythos card companion &amp; game tracker</span>
+        <span class="fan-disclaimer">Fan-made tool &mdash; not affiliated with Fantasy Flight Games</span>
+      </div>
+    </div>
+    <div class="nav-title">New Game Setup</div>
+    <div class="setup-nav-actions">
+      <button class="btn-begin" id="build-btn" disabled onclick="buildDecks()">&#10022; Build Decks &amp; Begin</button>
+    </div>
+  </nav>
+
+  <!-- Session restore banner (shown when saved game detected) -->
+  <div id="session-section" class="session-banner" style="display:none">
+    <span>A saved game was found.</span>
+    <button id="load-session-btn" class="btn-session-load">Resume Last Game</button>
+    <button id="new-game-from-load-btn" class="btn-session-new">Start Fresh</button>
+  </div>
+
+  <button class="btn-sidebar-pill" id="sidebar-pill-btn" onclick="toggleSetupSidebar()" title="Toggle options panel">&#8250;</button>
+
+  <div class="setup-layout">
+
+    <!-- ── Left: Configuration ── -->
+    <aside class="setup-sidebar">
+
+      <!-- Expansions -->
+      <div>
+        <div class="section-label">Expansions</div>
+        <div class="config-panel">
+          <div class="expansion-grid-pills" id="expansion-grid"></div>
+          <div class="expansion-actions">
+            <button onclick="setAllExpansions(true)">Select All</button>
+            <button onclick="setAllExpansions(false)">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Difficulty -->
+      <div>
+        <div class="section-label">Difficulty Mode</div>
+        <div class="config-panel">
+          <div class="difficulty-pill-grid" id="difficulty-grid"></div>
+        </div>
+      </div>
+
+      <!-- Prelude -->
+      <div>
+        <div class="section-label">Prelude <span class="optional-tag">(optional)</span></div>
+        <div class="config-panel">
+          <select class="prelude-select" id="prelude-select">
+            <option value="">— None —</option>
+          </select>
+          <div id="prelude-info" class="prelude-info hidden"></div>
+        </div>
+      </div>
+
+      <!-- Starting Rumor -->
+      <div>
+        <div class="config-panel">
+          <div class="toggle-row">
+            <div class="toggle-switch" id="rumor-toggle-switch" onclick="toggleRumor()"></div>
+            <input type="checkbox" id="starting-rumor-cb" class="hidden">
+            <div>
+              <div class="toggle-label">Start with a Rumor</div>
+              <div class="toggle-desc">A Blue Rumor card is drawn first and placed into play</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="build-error" class="build-error hidden"></div>
+
+    </aside>
+
+    <!-- ── Right: Tabbed Browser ── -->
+    <div class="setup-browser">
+
+      <!-- Tab Bar -->
+      <div class="setup-tab-bar">
+        <button class="setup-tab active" id="tab-ao"  onclick="switchSetupTab('ao')">Ancient One</button>
+        <button class="setup-tab"        id="tab-inv" onclick="switchSetupTab('inv')">Investigators</button>
+      </div>
+
+      <!-- Tab Panel: Ancient One -->
+      <div class="setup-tab-panel" id="tabpanel-ao">
+        <div class="ao-browser">
+          <div class="ao-grid-area">
+            <div class="ao-grid-header">
+              <div class="ao-grid-title">Choose an Ancient One</div>
+              <div class="ao-grid-count" id="ao-grid-count"></div>
+            </div>
+            <div class="ao-filter-row">
+              <span class="ao-filter-label">Difficulty:</span>
+              <div class="ao-diff-filter active" data-diff="all" onclick="filterAoDifficulty('all')">All</div>
+              <div class="ao-diff-filter" data-diff="Low" onclick="filterAoDifficulty('Low')">Low</div>
+              <div class="ao-diff-filter" data-diff="Medium" onclick="filterAoDifficulty('Medium')">Medium</div>
+              <div class="ao-diff-filter" data-diff="High" onclick="filterAoDifficulty('High')">High</div>
+              <button class="ao-random-btn" onclick="selectRandomAo()">&#9878; Random</button>
+              <input class="ao-search" type="text" placeholder="Search by name..." id="ao-search" oninput="applyAoFilters()">
+            </div>
+            <div class="ao-grid" id="ao-grid"></div>
+            <div class="ao-empty" id="ao-empty" style="display:none">
+              <div class="ao-empty-text">No Ancient Ones match your filters</div>
+            </div>
+          </div>
+          <!-- Detail panel slides up from bottom -->
+          <div class="ao-detail" id="ao-detail">
+            <div class="ao-detail-inner" id="ao-detail-inner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Panel: Investigators -->
+      <div class="setup-tab-panel hidden" id="tabpanel-inv">
+        <div class="inv-browser">
+          <div class="inv-grid-area">
+            <div class="inv-grid-header">
+              <div class="ao-grid-title">Choose an Investigator</div>
+              <div class="inv-grid-count" id="inv-grid-count"></div>
+            </div>
+            <div class="inv-filter-row">
+              <span class="ao-filter-label">Specialization:</span>
+              <div class="inv-trait-filter active" data-trait="all" onclick="filterInvTrait('all')">All</div>
+              <div class="inv-trait-filter" data-trait="Combat"      onclick="filterInvTrait('Combat')">Combat</div>
+              <div class="inv-trait-filter" data-trait="Magic"       onclick="filterInvTrait('Magic')">Magic</div>
+              <div class="inv-trait-filter" data-trait="Research"    onclick="filterInvTrait('Research')">Research</div>
+              <div class="inv-trait-filter" data-trait="Support"     onclick="filterInvTrait('Support')">Support</div>
+              <div class="inv-trait-filter" data-trait="Expedition"  onclick="filterInvTrait('Expedition')">Expedition</div>
+              <div class="inv-trait-filter" data-trait="Gate Closer" onclick="filterInvTrait('Gate Closer')">Gate Closer</div>
+              <div class="inv-trait-filter" data-trait="All-Rounder" onclick="filterInvTrait('All-Rounder')">All-Rounder</div>
+              <input class="ao-search" type="text" placeholder="Search by name..." id="inv-search" oninput="applyInvFilters()">
+            </div>
+            <div class="inv-grid" id="inv-grid"></div>
+            <div class="ao-empty" id="inv-empty" style="display:none">
+              <div class="ao-empty-text">No investigators match your filters</div>
+            </div>
+          </div>
+          <!-- Detail panel slides up from bottom -->
+          <div class="inv-detail" id="inv-detail">
+            <div class="inv-detail-inner" id="inv-detail-inner"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.setup-browser -->
+
+  </div>
+</div>
+
+<!-- ======================================================
+     GAME SCREEN
+====================================================== -->
+<div id="game-screen" class="screen hidden">
+
+  <nav class="top-nav">
+    <div class="nav-left">
+      <div class="brand">
+        <img class="brand-img" src="images/backgrounds/codex_logo.png" alt="Eldritch Codex" onerror="this.style.display='none'">
+        <div>
+          <h1>Eldritch Codex</h1>
+          <span>Mythos card companion &amp; game tracker</span>
+          <span class="fan-disclaimer">Fan-made tool &mdash; not affiliated with Fantasy Flight Games</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-middle">
+      <span class="ancient-one-name">&#9876; <span id="game-ao-name">—</span> &#9876;</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-counter accent">
+        <button class="counter-btn" id="doom-minus">&minus;</button>
+        <div class="nav-counter-label">
+          <span class="nav-counter-label-text">Doom</span>
+          <span class="nav-counter-val doom-val" id="doom-display">0</span>
+        </div>
+        <button class="counter-btn" id="doom-plus">+</button>
+      </div>
+      <div class="nav-counter">
+        <button class="counter-btn" id="mysteries-minus">&minus;</button>
+        <div class="nav-counter-label">
+          <span class="nav-counter-label-text">Mysteries</span>
+          <span class="nav-counter-val mystery-val" id="mysteries-display">0 / 3</span>
+        </div>
+        <button class="counter-btn" id="mysteries-plus">+</button>
+      </div>
+      <div class="nav-stat">
+        <span class="nav-stat-label">Round</span>
+        <span class="nav-stat-value" id="round-display">0</span>
+      </div>
+      <div class="nav-stat">
+        <span class="nav-stat-label">Game</span>
+        <span class="nav-stat-value" id="timer-display">0:00</span>
+      </div>
+      <button class="btn-new-game" id="new-game-btn">New Game</button>
+    </div>
+  </nav>
+
+  <!-- Prelude placement banner -->
+  <div id="prelude-mythos-banner" class="prelude-banner hidden">
+    <span class="banner-icon">&#9888;</span>
+    <span id="prelude-banner-text"></span>
+    <button id="prelude-banner-ack" class="btn-banner-ack">Acknowledged</button>
+  </div>
+
+  <div class="app-layout">
+
+    <!-- ── LEFT: Sidebar (Mythos Deck) ── -->
+    <aside class="sidebar">
+      <div class="section-header">Mythos Deck</div>
+
+      <div class="mythos-content-panel">
+
+        <!-- Active prelude reminder -->
+        <div id="prelude-inline-display" class="prelude-inline hidden">
+          <div class="prelude-inline-label">Prelude</div>
+          <div id="prelude-inline-name" class="prelude-inline-name"></div>
+        </div>
+
+        <!-- Stage tracker -->
+        <div class="stage-section">
+          <div class="stage-label-text">Stage</div>
+          <div id="stage-block-0" class="stage-row">
+            <span class="stage-name">Stage I</span>
+            <div class="stage-badges">
+              <span class="badge badge-green"><b id="s0g">0</b> G</span>
+              <span class="badge badge-yellow"><b id="s0y">0</b> Y</span>
+              <span class="badge badge-blue"><b id="s0b">0</b> B</span>
+            </div>
+            <div class="stage-bar"><div class="stage-bar-g" id="s0bar-g"></div><div class="stage-bar-y" id="s0bar-y"></div><div class="stage-bar-b" id="s0bar-b"></div></div>
+          </div>
+          <div id="stage-block-1" class="stage-row">
+            <span class="stage-name">Stage II</span>
+            <div class="stage-badges">
+              <span class="badge badge-green"><b id="s1g">0</b> G</span>
+              <span class="badge badge-yellow"><b id="s1y">0</b> Y</span>
+              <span class="badge badge-blue"><b id="s1b">0</b> B</span>
+            </div>
+            <div class="stage-bar"><div class="stage-bar-g" id="s1bar-g"></div><div class="stage-bar-y" id="s1bar-y"></div><div class="stage-bar-b" id="s1bar-b"></div></div>
+          </div>
+          <div id="stage-block-2" class="stage-row">
+            <span class="stage-name">Stage III</span>
+            <div class="stage-badges">
+              <span class="badge badge-green"><b id="s2g">0</b> G</span>
+              <span class="badge badge-yellow"><b id="s2y">0</b> Y</span>
+              <span class="badge badge-blue"><b id="s2b">0</b> B</span>
+            </div>
+            <div class="stage-bar"><div class="stage-bar-g" id="s2bar-g"></div><div class="stage-bar-y" id="s2bar-y"></div><div class="stage-bar-b" id="s2bar-b"></div></div>
+          </div>
+        </div>
+
+        <!-- Deck low warning -->
+        <div id="deck-low-warning" class="deck-low-warning hidden">
+          &#9888; Only <span id="cards-remaining-count">0</span> card(s) remaining!
+        </div>
+
+        <!-- Draw button -->
+        <button id="draw-mythos-btn" class="btn-draw-mythos">Draw Mythos Card</button>
+
+        <!-- Card frame — always visible -->
+        <div class="card-display">
+          <div class="card-flip-container" id="card-flip-container">
+            <div class="card-flip-inner" id="card-flip-inner">
+              <div class="card-face card-back card-back-idle" id="card-back-face">
+                <div class="card-back-content">
+                  <div class="card-back-symbol">&#10022;</div>
+                  <div class="card-back-color-label" id="card-back-label"></div>
+                </div>
+              </div>
+              <div class="card-face card-front" id="card-front-face">
+                <img id="drawn-card-img" src="" alt="Mythos Card">
+              </div>
+            </div>
+          </div>
+          <div class="reveal-hint hidden" id="reveal-hint">Click the card to reveal</div>
+          <div class="card-actions hidden" id="card-actions">
+            <div class="card-type-label" id="card-type-label"></div>
+            <button class="btn-dismiss" id="dismiss-card-btn">Dismiss (Event)</button>
+            <button class="btn-to-play" id="to-play-card-btn">Move to In Play</button>
+          </div>
+        </div>
+
+      </div><!-- /.mythos-content-panel -->
+
+      <!-- Discard pile -->
+      <div class="discard-section">
+        <div class="discard-label-row">
+          Discard Pile <span class="count-badge" id="discard-count">0</span>
+        </div>
+        <div class="discard-grid" id="discard-grid">
+          <span class="discard-empty">—</span>
+        </div>
+      </div>
+
+    </aside><!-- /.sidebar -->
+
+    <!-- ── RIGHT: Main Content ── -->
+    <div class="main-content" id="game-main-content">
+
+      <!-- Left column: In Play + Ancient One -->
+      <div class="main-left-col">
+
+      <!-- In Play -->
+      <div class="in-play-section">
+        <div class="section-header">
+          Mythos In Play <span class="count-badge" id="in-play-count">0</span>
+        </div>
+        <div class="in-play-grid" id="in-play-grid">
+          <p class="empty-hint" id="in-play-empty">No ongoing cards in play.</p>
+        </div>
+      </div>
+
+      <!-- Ancient One -->
+      <div class="ao-game-section">
+        <div class="boss-section" id="game-ao-panel">
+          <!-- Populated by renderAoGamePanel() -->
+        </div>
+      </div>
+
+      </div><!-- /.main-left-col -->
+
+      <!-- Right column: Card Decks -->
+      <div class="main-right-col">
+      <div class="decks-container">
+        <div class="decks-container-header">Card Decks</div>
+
+        <div class="deck-row">
+
+          <!-- ASSETS -->
+          <section class="deck-panel" id="deck-assets">
+            <div class="deck-panel-header">
+              <span class="deck-panel-title">Assets</span>
+              <span class="remaining-pill" id="assets-count">0 remaining</span>
+            </div>
+            <div class="trait-filter-grid" id="assets-traits"></div>
+            <div class="filter-controls" id="assets-filter-controls">
+              <div class="logic-toggle-wrap">
+                <button class="logic-btn" data-deck="assets" data-val="AND">AND</button>
+                <button class="logic-btn active" data-deck="assets" data-val="OR">OR</button>
+              </div>
+            </div>
+            <div class="cost-filter-row">
+              <label class="cost-label">Cost &le;
+                <select id="assets-cost-select" class="select-sm">
+                  <option value="">Any</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5+</option>
+                </select>
+              </label>
+            </div>
+            <div class="deck-buttons">
+              <button class="btn-deck draw-one-btn" data-deck="assets">Draw Card</button>
+              <button class="btn-deck secondary draw-keep-btn" data-deck="assets">Draw 2, Keep 1</button>
+            </div>
+            <div class="find-by-name-wrap">
+              <input class="deck-search find-input" type="text" data-deck="assets" placeholder="Find by name&hellip;">
+              <div class="find-results hidden" id="assets-find-results"></div>
+            </div>
+            <div class="last-drawn hidden" id="assets-last-drawn"></div>
+            <div class="draw-keep-modal hidden" id="assets-keep-modal"></div>
+            <div class="collapsible-section">
+              <button class="collapsible-toggle" data-target="assets-history">
+                Draw History <span class="count-badge" id="assets-history-count">0</span>
+                <span class="chevron">&#9662;</span>
+              </button>
+              <div class="collapsible-content collapsed draw-history" id="assets-history"></div>
+            </div>
+          </section>
+
+          <!-- UNIQUE ASSETS -->
+          <section class="deck-panel" id="deck-uniqueAssets">
+            <div class="deck-panel-header">
+              <span class="deck-panel-title">Unique Assets</span>
+              <span class="remaining-pill" id="uniqueAssets-count">0 remaining</span>
+            </div>
+            <div class="trait-filter-grid" id="uniqueAssets-traits"></div>
+            <div class="filter-controls" id="uniqueAssets-filter-controls">
+              <div class="logic-toggle-wrap">
+                <button class="logic-btn" data-deck="uniqueAssets" data-val="AND">AND</button>
+                <button class="logic-btn active" data-deck="uniqueAssets" data-val="OR">OR</button>
+              </div>
+            </div>
+            <div class="deck-buttons">
+              <button class="btn-deck draw-one-btn" data-deck="uniqueAssets">Draw Card</button>
+              <button class="btn-deck secondary draw-keep-btn" data-deck="uniqueAssets">Draw 2, Keep 1</button>
+            </div>
+            <div class="find-by-name-wrap">
+              <input class="deck-search find-input" type="text" data-deck="uniqueAssets" placeholder="Find by name&hellip;">
+              <div class="find-results hidden" id="uniqueAssets-find-results"></div>
+            </div>
+            <div class="last-drawn hidden" id="uniqueAssets-last-drawn"></div>
+            <div class="draw-keep-modal hidden" id="uniqueAssets-keep-modal"></div>
+            <div class="collapsible-section">
+              <button class="collapsible-toggle" data-target="uniqueAssets-history">
+                Draw History <span class="count-badge" id="uniqueAssets-history-count">0</span>
+                <span class="chevron">&#9662;</span>
+              </button>
+              <div class="collapsible-content collapsed draw-history" id="uniqueAssets-history"></div>
+            </div>
+          </section>
+
+        </div><!-- /.deck-row -->
+
+        <div class="deck-row">
+
+          <!-- SPELLS -->
+          <section class="deck-panel" id="deck-spells">
+            <div class="deck-panel-header">
+              <span class="deck-panel-title">Spells</span>
+              <span class="remaining-pill" id="spells-count">0 remaining</span>
+            </div>
+            <div class="trait-filter-grid" id="spells-traits"></div>
+            <div class="filter-controls" id="spells-filter-controls">
+              <div class="logic-toggle-wrap">
+                <button class="logic-btn" data-deck="spells" data-val="AND">AND</button>
+                <button class="logic-btn active" data-deck="spells" data-val="OR">OR</button>
+              </div>
+            </div>
+            <div class="deck-buttons">
+              <button class="btn-deck draw-one-btn" data-deck="spells">Draw Card</button>
+              <button class="btn-deck secondary draw-keep-btn" data-deck="spells">Draw 2, Keep 1</button>
+            </div>
+            <div class="find-by-name-wrap">
+              <input class="deck-search find-input" type="text" data-deck="spells" placeholder="Find by name&hellip;">
+              <div class="find-results hidden" id="spells-find-results"></div>
+            </div>
+            <div class="last-drawn hidden" id="spells-last-drawn"></div>
+            <div class="draw-keep-modal hidden" id="spells-keep-modal"></div>
+            <div class="collapsible-section">
+              <button class="collapsible-toggle" data-target="spells-history">
+                Draw History <span class="count-badge" id="spells-history-count">0</span>
+                <span class="chevron">&#9662;</span>
+              </button>
+              <div class="collapsible-content collapsed draw-history" id="spells-history"></div>
+            </div>
+          </section>
+
+          <!-- ARTIFACTS -->
+          <section class="deck-panel" id="deck-artifacts">
+            <div class="deck-panel-header">
+              <span class="deck-panel-title">Artifacts</span>
+              <span class="remaining-pill" id="artifacts-count">0 remaining</span>
+            </div>
+            <div class="trait-filter-grid" id="artifacts-traits"></div>
+            <div class="filter-controls" id="artifacts-filter-controls">
+              <div class="logic-toggle-wrap">
+                <button class="logic-btn" data-deck="artifacts" data-val="AND">AND</button>
+                <button class="logic-btn active" data-deck="artifacts" data-val="OR">OR</button>
+              </div>
+            </div>
+            <div class="deck-buttons">
+              <button class="btn-deck draw-one-btn" data-deck="artifacts">Draw Card</button>
+              <button class="btn-deck secondary draw-keep-btn" data-deck="artifacts">Draw 2, Keep 1</button>
+            </div>
+            <div class="find-by-name-wrap">
+              <input class="deck-search find-input" type="text" data-deck="artifacts" placeholder="Find by name&hellip;">
+              <div class="find-results hidden" id="artifacts-find-results"></div>
+            </div>
+            <div class="last-drawn hidden" id="artifacts-last-drawn"></div>
+            <div class="draw-keep-modal hidden" id="artifacts-keep-modal"></div>
+            <div class="collapsible-section">
+              <button class="collapsible-toggle" data-target="artifacts-history">
+                Draw History <span class="count-badge" id="artifacts-history-count">0</span>
+                <span class="chevron">&#9662;</span>
+              </button>
+              <div class="collapsible-content collapsed draw-history" id="artifacts-history"></div>
+            </div>
+          </section>
+
+        </div><!-- /.deck-row -->
+
+        <div class="deck-row">
+
+          <!-- CONDITIONS -->
+          <section class="deck-panel" id="deck-conditions">
+            <div class="deck-panel-header">
+              <span class="deck-panel-title">Conditions</span>
+              <span class="remaining-pill" id="conditions-count">0 remaining</span>
+            </div>
+            <div class="trait-filter-grid" id="conditions-traits"></div>
+            <div class="filter-controls" id="conditions-filter-controls">
+              <div class="logic-toggle-wrap">
+                <button class="logic-btn" data-deck="conditions" data-val="AND">AND</button>
+                <button class="logic-btn active" data-deck="conditions" data-val="OR">OR</button>
+              </div>
+            </div>
+            <div class="deck-buttons">
+              <button class="btn-deck draw-one-btn" data-deck="conditions">Draw Card</button>
+              <button class="btn-deck secondary draw-keep-btn" data-deck="conditions">Draw 2, Keep 1</button>
+            </div>
+            <div class="find-by-name-wrap">
+              <input class="deck-search find-input" type="text" data-deck="conditions" placeholder="Find by name&hellip;">
+              <div class="find-results hidden" id="conditions-find-results"></div>
+            </div>
+            <div class="last-drawn hidden" id="conditions-last-drawn"></div>
+            <div class="draw-keep-modal hidden" id="conditions-keep-modal"></div>
+            <div class="collapsible-section">
+              <button class="collapsible-toggle" data-target="conditions-history">
+                Draw History <span class="count-badge" id="conditions-history-count">0</span>
+                <span class="chevron">&#9662;</span>
+              </button>
+              <div class="collapsible-content collapsed draw-history" id="conditions-history"></div>
+            </div>
+          </section>
+
+          <div></div><!-- spacer for grid alignment -->
+
+        </div><!-- /.deck-row -->
+
+      </div><!-- /.decks-container -->
+      </div><!-- /.main-right-col -->
+
+    </div><!-- /.main-content -->
+
+  </div><!-- /.app-layout -->
+
+  <!-- Card lightbox (zoom) -->
+  <div id="card-lightbox" class="card-lightbox hidden" role="dialog">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <img id="lightbox-img" src="" alt="Card detail">
+      <button class="lightbox-close" id="lightbox-close">&#10005;</button>
+    </div>
+  </div>
+
+  <!-- Deck card reveal lightbox -->
+  <div id="deck-card-lightbox" class="deck-card-lightbox hidden" role="dialog" onclick="closeDeckCardLightbox()">
+    <div class="deck-lb-card">
+      <img id="deck-lb-img" src="" alt="Card">
+      <p class="deck-lb-hint">click anywhere to close</p>
+    </div>
+  </div>
+
+  <!-- Mythos card reveal lightbox -->
+  <div id="mythos-lightbox" class="mythos-lightbox hidden" role="dialog">
+    <div class="mythos-lb-overlay" id="mythos-lb-overlay"></div>
+    <div class="mythos-lb-card" id="mythos-lb-card">
+      <img id="mythos-lb-img" src="" alt="Mythos Card">
+      <p class="mythos-lb-hint">&#10005; click anywhere to close</p>
+    </div>
+  </div>
+
+  <!-- Hard card screen flash -->
+  <div id="screen-flash" class="screen-flash hidden"></div>
+
+</div><!-- /#game-screen -->
+
+<!-- Scripts: vendor data first, then app data, then app logic -->
+<script>var deckData = [];</script>
+<script src="js/vendor/data_non_unique_asset.js"></script>
+<script src="js/vendor/data_condition.js"></script>
+<script src="js/vendor/data_artifact.js"></script>
+<script src="js/vendor/data_spell.js"></script>
+<script src="js/vendor/data_unique_asset.js"></script>
+<script src="js/data-mythos.js"></script>
+<script src="js/data-preludes.js"></script>
+<script src="js/data-investigators.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ancient One Awakens — Doom Zero Animation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-app: #0d0f14;
+    --parchment: #d9c9a9;
+    --parchment-dim: rgba(217,201,169,0.35);
+    --brass: #c9a84c;
+    --brass-bright: #f5e3a3;
+    --border-accent: rgba(201,168,76,0.22);
+    --doom-red: #d43030;
+    --doom-red-dark: #8b1a1a;
+    --doom-red-glow: rgba(200,40,40,0.6);
+    --doom-crimson: #ff2020;
+    --font-display: 'Cinzel', serif;
+    --font-body: 'EB Garamond', Georgia, serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-app);
+    font-family: var(--font-body);
+    color: var(--parchment);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    overflow: hidden;
+  }
+
+  /* ========= SCREEN EFFECTS ========= */
+
+  /* Red vignette that closes in */
+  .doom-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 900;
+    opacity: 0;
+  }
+
+  .doom-vignette.active {
+    animation: vignette-pulse 4s ease-out forwards;
+  }
+
+  @keyframes vignette-pulse {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+
+  .doom-vignette::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(140,20,20,0.15) 60%, rgba(80,10,10,0.5) 85%, rgba(40,5,5,0.8) 100%);
+  }
+
+  /* Blood-red screen flash */
+  .doom-flash {
+    position: fixed;
+    inset: 0;
+    background: var(--doom-crimson);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .doom-flash.active {
+    animation: doom-flash-anim 2s ease-out;
+  }
+
+  @keyframes doom-flash-anim {
+    0% { opacity: 0; }
+    5% { opacity: 0.5; }
+    10% { opacity: 0; }
+    15% { opacity: 0.3; }
+    25% { opacity: 0; }
+    30% { opacity: 0.15; }
+    40% { opacity: 0; }
+  }
+
+  /* Heavy screen shake */
+  .doom-shake-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .doom-shake-wrapper.shaking {
+    animation: doom-shake 1.2s ease-out;
+  }
+
+  @keyframes doom-shake {
+    0% { transform: translate(0,0) rotate(0); }
+    5% { transform: translate(-6px, 3px) rotate(-0.8deg); }
+    10% { transform: translate(7px, -4px) rotate(1deg); }
+    15% { transform: translate(-8px, 2px) rotate(-0.6deg); }
+    20% { transform: translate(6px, -3px) rotate(0.8deg); }
+    25% { transform: translate(-5px, 4px) rotate(-1deg); }
+    30% { transform: translate(7px, -2px) rotate(0.5deg); }
+    35% { transform: translate(-4px, 3px) rotate(-0.4deg); }
+    40% { transform: translate(5px, -2px) rotate(0.6deg); }
+    50% { transform: translate(-3px, 1px) rotate(-0.3deg); }
+    60% { transform: translate(2px, -1px) rotate(0.2deg); }
+    75% { transform: translate(-1px, 0) rotate(-0.1deg); }
+    100% { transform: translate(0,0) rotate(0); }
+  }
+
+  /* ========= BOSS CARD ========= */
+
+  .boss-defeat-area {
+    position: relative;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .boss-card-wrapper {
+    position: relative;
+    width: 220px;
+    border-radius: 10px;
+    overflow: visible;
+    border: 1px solid var(--border-accent);
+    transition: border-color 1s;
+  }
+
+  .boss-card-wrapper.awakened {
+    border-color: rgba(200,40,40,0.5);
+  }
+
+  .boss-card-img {
+    width: 100%;
+    aspect-ratio: 2.5/3.5;
+    background: url('images/Ithaqua.png') center top / cover;
+    position: relative;
+    border-radius: 10px 10px 0 0;
+    transition: filter 3s ease-out;
+  }
+
+  /* Image gets a red/dark tint — NOT desaturated like victory. The Ancient One is MORE alive now. */
+  .boss-card-wrapper.awakened .boss-card-img {
+    filter: saturate(1.3) brightness(0.7) contrast(1.2);
+    animation: img-red-pulse 3s 2s ease-in-out infinite;
+  }
+
+  @keyframes img-red-pulse {
+    0%, 100% { filter: saturate(1.3) brightness(0.7) contrast(1.2); }
+    50% { filter: saturate(1.5) brightness(0.6) contrast(1.3); }
+  }
+
+  .boss-card-info {
+    padding: 8px 12px;
+    background: rgba(14,17,24,0.95);
+    border-top: 1px solid var(--border-accent);
+    text-align: center;
+    transition: border-color 1s;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .boss-card-wrapper.awakened .boss-card-info {
+    border-top-color: rgba(200,40,40,0.4);
+  }
+
+  .boss-card-info h3 {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brass);
+    transition: color 1.5s;
+  }
+
+  .boss-card-wrapper.awakened .boss-card-info h3 {
+    color: var(--doom-red);
+    animation: name-flicker 4s 2s ease-in-out infinite;
+  }
+
+  @keyframes name-flicker {
+    0%, 100% { color: var(--doom-red); text-shadow: 0 0 8px rgba(200,40,40,0.3); }
+    50% { color: #e84040; text-shadow: 0 0 16px rgba(200,40,40,0.5); }
+  }
+
+  .boss-card-info span {
+    font-size: 11px;
+    color: var(--parchment-dim);
+  }
+
+  /* ========= RED CRACKS — more violent than gold victory cracks ========= */
+
+  .doom-crack-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 2;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+  }
+
+  .boss-card-wrapper.awakened .doom-crack-overlay {
+    animation: doom-cracks-appear 0.8s 0.5s ease-out forwards;
+  }
+
+  @keyframes doom-cracks-appear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  .doom-crack {
+    position: absolute;
+    background: var(--doom-crimson);
+    transform-origin: top center;
+    filter: blur(0.3px);
+    box-shadow: 0 0 4px rgba(255,30,30,0.7), 0 0 10px rgba(200,20,20,0.4);
+  }
+
+  /* Top edge — cracks growing downward */
+  .doom-crack-t1 { width: 1.5px; height: 0; top: 0; left: 18%; transform: rotate(8deg); }
+  .doom-crack-t2 { width: 1.5px; height: 0; top: 0; left: 45%; transform: rotate(-3deg); }
+  .doom-crack-t3 { width: 1.5px; height: 0; top: 0; left: 72%; transform: rotate(-6deg); }
+
+  /* Bottom edge — cracks growing upward */
+  .doom-crack-b1 { width: 1.5px; height: 0; bottom: 0; left: 25%; transform: rotate(5deg); transform-origin: bottom center; }
+  .doom-crack-b2 { width: 1.5px; height: 0; bottom: 0; left: 60%; transform: rotate(-4deg); transform-origin: bottom center; }
+
+  /* Left edge — cracks growing rightward */
+  .doom-crack-l1 { width: 0; height: 1.5px; top: 22%; left: 0; transform: rotate(6deg); transform-origin: left center; }
+  .doom-crack-l2 { width: 0; height: 1.5px; top: 55%; left: 0; transform: rotate(-4deg); transform-origin: left center; }
+  .doom-crack-l3 { width: 0; height: 1.5px; top: 78%; left: 0; transform: rotate(3deg); transform-origin: left center; }
+
+  /* Right edge — cracks growing leftward */
+  .doom-crack-r1 { width: 0; height: 1.5px; top: 30%; right: 0; transform: rotate(-5deg); transform-origin: right center; }
+  .doom-crack-r2 { width: 0; height: 1.5px; top: 65%; right: 0; transform: rotate(3deg); transform-origin: right center; }
+
+  /* Corner cracks — diagonal from corners */
+  .doom-crack-c1 { width: 1.5px; height: 0; top: 0; left: 3%; transform: rotate(35deg); }
+  .doom-crack-c2 { width: 1.5px; height: 0; top: 0; right: 3%; transform: rotate(-35deg); }
+  .doom-crack-c3 { width: 1.5px; height: 0; bottom: 0; left: 5%; transform: rotate(-30deg); transform-origin: bottom center; }
+  .doom-crack-c4 { width: 1.5px; height: 0; bottom: 0; right: 5%; transform: rotate(30deg); transform-origin: bottom center; }
+
+  /* Branch cracks — secondary splits off main cracks */
+  .doom-crack-br1 { width: 1.5px; height: 0; top: 8%; left: 20%; transform: rotate(40deg); }
+  .doom-crack-br2 { width: 1.5px; height: 0; top: 10%; left: 70%; transform: rotate(-35deg); }
+  .doom-crack-br3 { width: 0; height: 1.5px; top: 24%; left: 5%; transform: rotate(15deg); transform-origin: left center; }
+  .doom-crack-br4 { width: 0; height: 1.5px; top: 56%; right: 4%; transform: rotate(-12deg); transform-origin: right center; }
+
+  /* Vertical cracks (top/bottom) grow in height */
+  .boss-card-wrapper.awakened .doom-crack-t1 { animation: crack-down 0.5s 0.5s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-t2 { animation: crack-down 0.4s 0.7s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-t3 { animation: crack-down 0.5s 0.6s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-b1 { animation: crack-up 0.4s 0.8s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-b2 { animation: crack-up 0.5s 0.9s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-c1 { animation: crack-down-short 0.3s 0.55s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-c2 { animation: crack-down-short 0.3s 0.65s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-c3 { animation: crack-up-short 0.3s 0.85s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-c4 { animation: crack-up-short 0.3s 0.95s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-br1 { animation: crack-down-tiny 0.25s 0.7s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-br2 { animation: crack-down-tiny 0.25s 0.8s ease-out forwards; }
+
+  /* Horizontal cracks (left/right) grow in width */
+  .boss-card-wrapper.awakened .doom-crack-l1 { animation: crack-right 0.5s 0.6s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-l2 { animation: crack-right 0.4s 0.75s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-l3 { animation: crack-right 0.5s 0.85s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-r1 { animation: crack-left 0.4s 0.65s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-r2 { animation: crack-left 0.5s 0.8s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-br3 { animation: crack-right-tiny 0.25s 0.75s ease-out forwards; }
+  .boss-card-wrapper.awakened .doom-crack-br4 { animation: crack-left-tiny 0.25s 0.9s ease-out forwards; }
+
+  @keyframes crack-down {
+    0% { height: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { height: 65px; opacity: 1; }
+  }
+
+  @keyframes crack-down-short {
+    0% { height: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { height: 40px; opacity: 1; }
+  }
+
+  @keyframes crack-down-tiny {
+    0% { height: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { height: 22px; opacity: 1; }
+  }
+
+  @keyframes crack-up {
+    0% { height: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { height: 55px; opacity: 1; }
+  }
+
+  @keyframes crack-up-short {
+    0% { height: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { height: 35px; opacity: 1; }
+  }
+
+  @keyframes crack-right {
+    0% { width: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { width: 55px; opacity: 1; }
+  }
+
+  @keyframes crack-right-tiny {
+    0% { width: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { width: 25px; opacity: 1; }
+  }
+
+  @keyframes crack-left {
+    0% { width: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { width: 50px; opacity: 1; }
+  }
+
+  @keyframes crack-left-tiny {
+    0% { width: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { width: 25px; opacity: 1; }
+  }
+
+  /* ========= RED GLOW AURA around the card ========= */
+
+  .doom-aura {
+    position: absolute;
+    inset: -15px;
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+  }
+
+  .boss-card-wrapper.awakened .doom-aura {
+    animation: aura-appear 2s 0.8s ease-out forwards, aura-pulse 3s 3s ease-in-out infinite;
+  }
+
+  @keyframes aura-appear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes aura-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(200,40,40,0.2), 0 0 40px rgba(150,20,20,0.1), 0 0 60px rgba(100,10,10,0.05); }
+    50% { box-shadow: 0 0 30px rgba(200,40,40,0.35), 0 0 60px rgba(150,20,20,0.2), 0 0 90px rgba(100,10,10,0.1); }
+  }
+
+  /* ========= EYES GLOW — two red dots positioned on the portrait ========= */
+
+  .doom-eyes {
+    position: absolute;
+    top: 28%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .doom-eye {
+    width: 8px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--doom-crimson);
+    opacity: 0;
+    box-shadow: 0 0 10px rgba(255,30,30,0.8), 0 0 25px rgba(200,20,20,0.5), 0 0 50px rgba(150,10,10,0.3);
+  }
+
+  .boss-card-wrapper.awakened .doom-eye {
+    animation: eyes-open 1.5s 1.5s ease-out forwards, eyes-pulse 4s 3s ease-in-out infinite;
+  }
+
+  @keyframes eyes-open {
+    0% { opacity: 0; transform: scaleY(0); }
+    60% { opacity: 1; transform: scaleY(1.3); }
+    100% { opacity: 1; transform: scaleY(1); }
+  }
+
+  @keyframes eyes-pulse {
+    0%, 100% { opacity: 0.8; box-shadow: 0 0 10px rgba(255,30,30,0.6), 0 0 25px rgba(200,20,20,0.3); }
+    50% { opacity: 1; box-shadow: 0 0 15px rgba(255,30,30,0.9), 0 0 35px rgba(200,20,20,0.5), 0 0 60px rgba(150,10,10,0.3); }
+  }
+
+  /* ========= RED EMBERS rising from card ========= */
+
+  .ember-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    overflow: visible;
+  }
+
+  .ember {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    opacity: 0;
+  }
+
+  .ember.hot { background: var(--doom-crimson); box-shadow: 0 0 4px rgba(255,30,30,0.9); }
+  .ember.warm { background: #ff6030; box-shadow: 0 0 4px rgba(255,80,30,0.8); }
+  .ember.cool { background: #ff8040; box-shadow: 0 0 3px rgba(255,120,40,0.6); }
+
+  .boss-card-wrapper.awakened .ember {
+    animation: ember-rise var(--dur) var(--delay) ease-out forwards;
+  }
+
+  /* After initial burst, keep spawning embers */
+  .boss-card-wrapper.awakened .ember.looping {
+    animation: ember-rise-loop var(--dur) var(--delay) ease-out infinite;
+  }
+
+  @keyframes ember-rise {
+    0% { opacity: 0; transform: translate(0, 0) scale(1); }
+    10% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.2); }
+  }
+
+  @keyframes ember-rise-loop {
+    0% { opacity: 0; transform: translate(0, 0) scale(1); }
+    10% { opacity: 0.8; }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.2); }
+  }
+
+  /* ========= AWAKENS BANNER ========= */
+
+  .awakens-banner {
+    position: relative;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    pointer-events: none;
+  }
+
+  .awakens-banner.active {
+    animation: awakens-banner-in 1.2s 2s ease-out forwards;
+  }
+
+  @keyframes awakens-banner-in {
+    0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+    60% { transform: translateY(-3px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .awakens-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--doom-red);
+  }
+
+  .awakens-banner.active .awakens-title {
+    animation: awakens-glow 3s 3s ease-in-out infinite;
+  }
+
+  @keyframes awakens-glow {
+    0%, 100% { text-shadow: 0 0 20px rgba(200,40,40,0.3), 0 0 40px rgba(150,20,20,0.15), 0 2px 4px rgba(0,0,0,0.8); }
+    50% { text-shadow: 0 0 30px rgba(200,40,40,0.5), 0 0 60px rgba(150,20,20,0.25), 0 0 80px rgba(100,10,10,0.15), 0 2px 4px rgba(0,0,0,0.8); }
+  }
+
+  .awakens-subtitle {
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: rgba(200,40,40,0.6);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  .awakens-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--doom-red);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    opacity: 0.8;
+  }
+
+  .awakens-flavor {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--parchment-dim);
+    font-style: italic;
+    margin-top: 10px;
+    max-width: 350px;
+    line-height: 1.5;
+  }
+
+  /* ========= DOOM COUNTER DEMO ========= */
+
+  .doom-demo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(14,17,24,0.9);
+    border: 1px solid var(--border-accent);
+    border-radius: 8px;
+    padding: 12px 20px;
+    transition: border-color 1s;
+  }
+
+  .doom-demo.danger {
+    border-color: rgba(200,40,40,0.4);
+    animation: doom-counter-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes doom-counter-pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(200,40,40,0); }
+    50% { box-shadow: 0 0 15px rgba(200,40,40,0.15); }
+  }
+
+  .doom-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--parchment-dim);
+  }
+
+  .doom-count {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--brass-bright);
+    transition: all 0.5s;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .doom-count.zero {
+    color: var(--doom-crimson);
+    text-shadow: 0 0 15px rgba(255,30,30,0.6);
+    animation: zero-flash 0.8s ease-out;
+  }
+
+  @keyframes zero-flash {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.4); color: #fff; text-shadow: 0 0 30px rgba(255,30,30,0.9); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* ========= CONTROLS ========= */
+
+  .controls { display: flex; gap: 12px; align-items: center; }
+
+  .btn-trigger {
+    font-family: var(--font-display); font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; color: #fff;
+    background: linear-gradient(180deg, #c03030, #8b1a1a);
+    border: 1px solid rgba(200,60,60,0.5); border-radius: 6px;
+    padding: 10px 24px; cursor: pointer; transition: all 0.2s;
+  }
+
+  .btn-trigger:hover { background: linear-gradient(180deg, #d04040, #a52222); transform: scale(1.03); }
+
+  .btn-reset {
+    font-family: var(--font-display); font-size: 10px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--parchment-dim);
+    background: transparent; border: 1px solid rgba(217,201,169,0.15);
+    border-radius: 6px; padding: 8px 16px; cursor: pointer;
+  }
+
+  .btn-reset:hover { border-color: rgba(217,201,169,0.3); color: var(--parchment); }
+
+  .demo-note {
+    font-size: 12px; color: var(--parchment-dim); text-align: center;
+    max-width: 500px; line-height: 1.5; font-style: italic;
+  }
+
+  /* Click overlay to dismiss */
+  .dismiss-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    cursor: pointer;
+    display: none;
+  }
+
+  .dismiss-overlay.active {
+    display: block;
+  }
+
+  .dismiss-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: rgba(217,201,169,0.4);
+    z-index: 950;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dismiss-hint.active {
+    animation: hint-appear 1s 4s ease-out forwards, hint-pulse 3s 5s ease-in-out infinite;
+  }
+
+  @keyframes hint-appear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes hint-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doom-vignette" id="doomVignette"></div>
+<div class="doom-flash" id="doomFlash"></div>
+<div class="dismiss-overlay" id="dismissOverlay"></div>
+<div class="dismiss-hint" id="dismissHint">Click anywhere to continue</div>
+
+<div class="doom-shake-wrapper" id="shakeWrapper">
+
+  <div class="doom-demo" id="doomDemo">
+    <span class="doom-label">Doom Track</span>
+    <span class="doom-count" id="doomCount">1</span>
+  </div>
+
+  <div class="boss-defeat-area">
+    <div class="boss-card-wrapper" id="bossCard">
+      <div class="doom-aura"></div>
+      <div class="boss-card-img"></div>
+
+      <div class="doom-crack-overlay">
+        <!-- Top edge -->
+        <div class="doom-crack doom-crack-t1"></div>
+        <div class="doom-crack doom-crack-t2"></div>
+        <div class="doom-crack doom-crack-t3"></div>
+        <!-- Bottom edge -->
+        <div class="doom-crack doom-crack-b1"></div>
+        <div class="doom-crack doom-crack-b2"></div>
+        <!-- Left edge -->
+        <div class="doom-crack doom-crack-l1"></div>
+        <div class="doom-crack doom-crack-l2"></div>
+        <div class="doom-crack doom-crack-l3"></div>
+        <!-- Right edge -->
+        <div class="doom-crack doom-crack-r1"></div>
+        <div class="doom-crack doom-crack-r2"></div>
+        <!-- Corners -->
+        <div class="doom-crack doom-crack-c1"></div>
+        <div class="doom-crack doom-crack-c2"></div>
+        <div class="doom-crack doom-crack-c3"></div>
+        <div class="doom-crack doom-crack-c4"></div>
+        <!-- Branches -->
+        <div class="doom-crack doom-crack-br1"></div>
+        <div class="doom-crack doom-crack-br2"></div>
+        <div class="doom-crack doom-crack-br3"></div>
+        <div class="doom-crack doom-crack-br4"></div>
+      </div>
+
+      <div class="doom-eyes">
+        <div class="doom-eye"></div>
+        <div class="doom-eye"></div>
+      </div>
+
+      <div class="ember-container" id="emberContainer"></div>
+
+      <div class="boss-card-info">
+        <h3>Ithaqua</h3>
+        <span>The Wind-Walker</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="awakens-banner" id="awakensBanner">
+    <div class="awakens-title">Awakened</div>
+    <div class="awakens-subtitle">The Ancient One stirs from its slumber</div>
+    <div class="awakens-name">Ithaqua has risen</div>
+    <div class="awakens-flavor">"The Wind-Walker descends from the frozen skies. The investigators must now face the Ancient One directly."</div>
+  </div>
+
+</div>
+
+<div class="controls">
+  <button class="btn-trigger" id="triggerBtn">Doom reaches zero</button>
+  <button class="btn-reset" id="resetBtn">Reset</button>
+</div>
+
+<div class="demo-note">
+  Click "Doom reaches zero" to trigger the awakening sequence. The doom counter drops to 0, the Ancient One's portrait cracks with red energy, glowing eyes appear, red embers rise, and the card pulses with a menacing aura. The animation loops until you click anywhere to dismiss.
+</div>
+
+<script>
+  function generateEmbers(looping) {
+    const container = document.getElementById('emberContainer');
+    if (!looping) container.innerHTML = '';
+    const count = looping ? 15 : 35;
+    for (let i = 0; i < count; i++) {
+      const e = document.createElement('div');
+      const type = Math.random();
+      e.className = 'ember ' + (type < 0.4 ? 'hot' : type < 0.7 ? 'warm' : 'cool');
+      if (looping) e.classList.add('looping');
+      e.style.left = (10 + Math.random() * 80) + '%';
+      e.style.top = (30 + Math.random() * 50) + '%';
+      e.style.setProperty('--tx', (Math.random() * 80 - 40) + 'px');
+      e.style.setProperty('--ty', -(60 + Math.random() * 120) + 'px');
+      e.style.setProperty('--dur', (1.5 + Math.random() * 2) + 's');
+      e.style.setProperty('--delay', (looping ? Math.random() * 3 : (0.4 + Math.random() * 1.2)) + 's');
+      e.style.width = (2 + Math.random() * 4) + 'px';
+      e.style.height = e.style.width;
+      container.appendChild(e);
+    }
+  }
+
+  let emberInterval = null;
+
+  document.getElementById('triggerBtn').addEventListener('click', function() {
+    const counter = document.getElementById('doomCount');
+    const card = document.getElementById('bossCard');
+    const flash = document.getElementById('doomFlash');
+    const vignette = document.getElementById('doomVignette');
+    const shake = document.getElementById('shakeWrapper');
+    const banner = document.getElementById('awakensBanner');
+    const doomDemo = document.getElementById('doomDemo');
+    const overlay = document.getElementById('dismissOverlay');
+    const hint = document.getElementById('dismissHint');
+
+    // Doom drops to zero
+    counter.textContent = '0';
+    counter.classList.add('zero');
+    doomDemo.classList.add('danger');
+
+    // Initial burst
+    setTimeout(() => {
+      flash.classList.add('active');
+      shake.classList.add('shaking');
+      vignette.classList.add('active');
+    }, 400);
+
+    setTimeout(() => {
+      card.classList.add('awakened');
+      generateEmbers(false);
+    }, 600);
+
+    // Start looping embers
+    setTimeout(() => {
+      generateEmbers(true);
+      emberInterval = setInterval(() => generateEmbers(true), 4000);
+    }, 3000);
+
+    setTimeout(() => {
+      banner.classList.add('active');
+      overlay.classList.add('active');
+      hint.classList.add('active');
+    }, 100);
+
+    this.disabled = true;
+    this.style.opacity = '0.5';
+  });
+
+  // Click to dismiss
+  document.getElementById('dismissOverlay').addEventListener('click', function() {
+    // Don't fully reset — the awakened state persists (the game continues)
+    // But remove the dramatic intro effects
+    const vignette = document.getElementById('doomVignette');
+    const banner = document.getElementById('awakensBanner');
+    const hint = document.getElementById('dismissHint');
+    const overlay = document.getElementById('dismissOverlay');
+
+    vignette.style.transition = 'opacity 1s';
+    vignette.style.opacity = '0';
+    banner.style.transition = 'opacity 0.5s';
+    banner.style.opacity = '0';
+    hint.style.display = 'none';
+    overlay.classList.remove('active');
+
+    // The card stays awakened — red aura, eyes, and embers persist
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    const counter = document.getElementById('doomCount');
+    const card = document.getElementById('bossCard');
+    const flash = document.getElementById('doomFlash');
+    const vignette = document.getElementById('doomVignette');
+    const shake = document.getElementById('shakeWrapper');
+    const banner = document.getElementById('awakensBanner');
+    const doomDemo = document.getElementById('doomDemo');
+    const trigger = document.getElementById('triggerBtn');
+    const overlay = document.getElementById('dismissOverlay');
+    const hint = document.getElementById('dismissHint');
+
+    counter.textContent = '1';
+    counter.classList.remove('zero');
+    card.classList.remove('awakened');
+    flash.classList.remove('active');
+    vignette.classList.remove('active');
+    vignette.style.transition = '';
+    vignette.style.opacity = '';
+    shake.classList.remove('shaking');
+    banner.classList.remove('active');
+    banner.style.transition = '';
+    banner.style.opacity = '';
+    doomDemo.classList.remove('danger');
+    overlay.classList.remove('active');
+    hint.classList.remove('active');
+    hint.style.display = '';
+    trigger.disabled = false;
+    trigger.style.opacity = '1';
+
+    document.getElementById('emberContainer').innerHTML = '';
+    if (emberInterval) { clearInterval(emberInterval); emberInterval = null; }
+  });
+</script>
+
+</body>
+</html>
