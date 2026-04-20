@@ -853,7 +853,7 @@ function renderAoGrid() {
         <div class="ao-card-stats">
           <div class="ao-stat">Doom <span class="ao-stat-val doom">${ao.doom}</span></div>
           <div class="ao-stat">Mysteries <span class="ao-stat-val mystery">${ao.mysteries}</span></div>
-          <div class="ao-stat">Difficulty <span style="${diffCol};font-weight:700;font-size:10px">${meta.diff}</span></div>
+          <div class="ao-stat">Difficulty <span style="${diffCol};font-weight:700;font-size:10px">${meta.diff === 'Medium' ? 'Med' : meta.diff}</span></div>
         </div>
       </div>
       <div class="ao-card-check">&#10022;</div>
